@@ -1,32 +1,103 @@
 {
   "schedule": [
-    {"week": 1, "date": "", "venue": "", "note": "오리엔테이션"},
-    {"week": 2, "date": "", "venue": "", "note": ""},
-    {"week": 3, "date": "", "venue": "", "note": ""},
-    {"week": 4, "date": "", "venue": "", "note": ""},
-    {"week": 5, "date": "", "venue": "", "note": ""},
-    {"week": 6, "date": "", "venue": "", "note": ""},
-    {"week": 7, "date": "", "venue": "", "note": ""},
-    {"week": 8, "date": "", "venue": "", "note": "최종 시상"}
+    {
+      "week": 1,
+      "date": "",
+      "note": "오리엔테이션"
+    },
+    {
+      "week": 2,
+      "dateWeekday": "",
+      "dateWeekend": "",
+      "note": ""
+    },
+    {
+      "week": 3,
+      "dateWeekday": "",
+      "dateWeekend": "",
+      "note": ""
+    },
+    {
+      "week": 4,
+      "dateWeekday": "",
+      "dateWeekend": "",
+      "note": ""
+    },
+    {
+      "week": 5,
+      "dateWeekday": "",
+      "dateWeekend": "",
+      "note": ""
+    },
+    {
+      "week": 6,
+      "dateWeekday": "",
+      "dateWeekend": "",
+      "note": ""
+    },
+    {
+      "week": 7,
+      "dateWeekday": "",
+      "dateWeekend": "",
+      "note": ""
+    },
+    {
+      "week": 8,
+      "dateWeekday": "",
+      "dateWeekend": "",
+      "note": "최종 시상"
+    }
   ],
   "assignments": [
-    {"week": 2, "topic": "", "guide": "", "quest": "", "preview": ""},
-    {"week": 3, "topic": "", "guide": "", "quest": "", "preview": ""},
-    {"week": 4, "topic": "", "guide": "", "quest": "", "preview": ""},
-    {"week": 5, "topic": "", "guide": "", "quest": "", "preview": ""},
-    {"week": 6, "topic": "", "guide": "", "quest": "", "preview": ""},
-    {"week": 7, "topic": "", "guide": "", "quest": "", "preview": ""},
-    {"week": 8, "topic": "", "guide": "", "quest": "", "preview": ""}
-  ],
-  "weeklyMemo": [
-    {"week": 1, "memo": ""},
-    {"week": 2, "memo": ""},
-    {"week": 3, "memo": ""},
-    {"week": 4, "memo": ""},
-    {"week": 5, "memo": ""},
-    {"week": 6, "memo": ""},
-    {"week": 7, "memo": ""},
-    {"week": 8, "memo": ""}
+    {
+      "week": 2,
+      "topic": "",
+      "guide": "",
+      "quest": "",
+      "preview": ""
+    },
+    {
+      "week": 3,
+      "topic": "",
+      "guide": "",
+      "quest": "",
+      "preview": ""
+    },
+    {
+      "week": 4,
+      "topic": "",
+      "guide": "",
+      "quest": "",
+      "preview": ""
+    },
+    {
+      "week": 5,
+      "topic": "",
+      "guide": "",
+      "quest": "",
+      "preview": ""
+    },
+    {
+      "week": 6,
+      "topic": "",
+      "guide": "",
+      "quest": "",
+      "preview": ""
+    },
+    {
+      "week": 7,
+      "topic": "",
+      "guide": "",
+      "quest": "",
+      "preview": ""
+    },
+    {
+      "week": 8,
+      "topic": "",
+      "guide": "",
+      "quest": "",
+      "preview": ""
+    }
   ],
   "notice": "",
   "lastUpdated": ""
