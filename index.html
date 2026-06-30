@@ -123,6 +123,39 @@
     .sched-field-label.we{color:var(--green);}
     .sched-field-label.ot{color:var(--purple);}
 
+
+    /* ── SCORE GRID ── */
+    .sc-wrap{overflow-x:auto;margin-bottom:16px;border-radius:10px;border:1px solid var(--border);}
+    .sc-table{border-collapse:collapse;font-size:12px;white-space:nowrap;}
+    .sc-table th{background:var(--light);color:var(--primary);font-weight:600;padding:6px 10px;border:1px solid var(--border);position:sticky;top:0;z-index:2;}
+    .sc-table th.sticky-col{left:0;z-index:3;min-width:80px;}
+    .sc-table th.sticky-col2{left:80px;z-index:3;min-width:36px;}
+    .sc-table td{padding:4px 6px;border:1px solid var(--border);text-align:center;vertical-align:middle;}
+    .sc-table td.sticky-col{position:sticky;left:0;background:white;z-index:1;text-align:left;font-weight:500;padding:4px 10px;}
+    .sc-table td.sticky-col2{position:sticky;left:80px;background:white;z-index:1;font-size:11px;color:var(--muted);}
+    .sc-table tr:nth-child(even) td{background:#fafcff;}
+    .sc-table tr:nth-child(even) td.sticky-col,.sc-table tr:nth-child(even) td.sticky-col2{background:#fafcff;}
+    .sc-cell{width:28px;height:28px;cursor:pointer;border-radius:4px;display:flex;align-items:center;justify-content:center;margin:0 auto;transition:background .1s;font-size:14px;user-select:none;}
+    .sc-cell:hover{background:var(--light);}
+    .sc-cell.sc-on{background:var(--green-light);color:var(--green);}
+    .sc-cell.sc-on::after{content:'●';}
+    .sc-cell:not(.sc-on)::after{content:'○';color:#dde4ed;}
+    .sc-cat-hd{background:#1a3a5c!important;color:white!important;}
+    .sc-week-hd{background:var(--primary)!important;color:white!important;font-size:11px;}
+    /* people tab */
+    .ppl-search{width:100%;padding:8px 14px;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:13px;margin-bottom:14px;outline:none;}
+    .ppl-search:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(46,125,190,0.15);}
+    .score-pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:700;}
+    .pill-pass{background:var(--green-light);color:var(--green);}
+    .pill-top{background:#fff3cd;color:#856404;}
+    .pill-normal{background:#f0f2f5;color:var(--muted);}
+    /* rank tab */
+    .rank-1{background:#fff8e1;}
+    .rank-2{background:#f5f5f5;}
+    .rank-3{background:#fdf6ff;}
+    .rank-pass{background:#e8f8f0;}
+    .rank-num{font-weight:700;font-size:14px;width:36px;text-align:center;}
+
     @media(max-width:768px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr;}.header,.admin-bar,.content{padding:16px;}.tabs{padding:0 16px;}.sched-layout{grid-template-columns:1fr;}.cal-wrap{position:static;}}
   </style>
 </head>
@@ -155,6 +188,9 @@
   <a class="tab" onclick="switchTab('timeline',this)">주차 타임라인</a>
   <a class="tab" onclick="switchTab('scores',this)">점수 시스템</a>
   <a class="tab" onclick="switchTab('groups',this)">발표·질문 배정</a>
+  <a class="tab" onclick="switchTab('people',this)">참가자</a>
+  <a class="tab" onclick="switchTab('input',this)">주차 입력</a>
+  <a class="tab" onclick="switchTab('rank',this)">순위</a>
 </div>
 
 <div class="content">
@@ -565,6 +601,212 @@ function renderAll(){
   ).join('');
   document.getElementById('weekContent').innerHTML=renderWeek(curW);
 }
+
+
+// ── PARTICIPANTS ──
+function emptyScores(){return{att:[0,0,0,0,0,0,0,0],qq:[0,0,0,0,0,0,0],qa:[0,0,0,0,0,0,0],qst:[0,0,0,0,0,0,0],qz:[0,0,0,0,0,0,0],ml:[0,0,0,0,0,0,0],ph:[0,0,0,0,0,0,0],intro:0,sp:[0,0,0,0,0,0,0],career:0,conf:0};}
+
+function calcScore(p){
+  const s=p.scores,sum=a=>a.reduce((x,y)=>x+y,0);
+  const n=sum(s.att),attScore=[0,5,7,10,15][Math.min(Math.max(n-4,0),4)];
+  const academic=sum(s.qq)*2+sum(s.qa)*2+sum(s.qst)*3+sum(s.qz);
+  const networking=s.intro*3+sum(s.ml)*2+sum(s.ph);
+  const self=sum(s.sp)*2+s.career*7+s.conf*10;
+  return{att:attScore,academic,networking,self,total:attScore+academic+networking+self};
+}
+
+function addParticipant(){
+  const newId=D.participants.length?Math.max(...D.participants.map(p=>p.id))+1:1;
+  D.participants.push({id:newId,name:'새 참가자',school:'',group:'',scores:emptyScores()});
+  localStorage.setItem(SK,JSON.stringify(D));
+  renderPeople();
+}
+
+function deletePerson(id){
+  if(!confirm('삭제하시겠습니까?'))return;
+  D.participants=D.participants.filter(p=>p.id!==id);
+  localStorage.setItem(SK,JSON.stringify(D));
+  renderPeople();
+}
+
+function updatePerson(id,field,val){
+  const p=D.participants.find(x=>x.id===id);
+  if(p){p[field]=val;localStorage.setItem(SK,JSON.stringify(D));}
+}
+
+function renderPeople(){
+  const q=(document.getElementById('pplSearch')||{}).value||'';
+  const btn=document.getElementById('addPplBtn');
+  if(btn)btn.style.display=editMode?'inline-block':'none';
+  const ps=D.participants.filter(p=>!q||p.name.includes(q)||p.school.includes(q)||p.group.includes(q));
+  document.getElementById('pplCount').textContent=`${ps.length}명 표시 중`;
+
+  const sorted=[...ps].sort((a,b)=>calcScore(b).total-calcScore(a).total);
+  const topIds=sorted.slice(0,5).map(p=>p.id);
+
+  let html=`<tr>
+    <th class="sticky-col">이름</th><th style="min-width:36px;">조</th><th>학교</th>
+    <th>출석</th><th>학술</th><th>네트워킹</th><th>자기주도</th><th>합계</th>
+    <th>진로커리<br>큘럼</th><th>학회발표/<br>리뷰논문</th>
+    ${editMode?'<th>삭제</th>':''}
+  </tr>`;
+  ps.forEach(p=>{
+    const sc=calcScore(p);
+    const pillCls=sc.total>=60?'pill-pass':topIds.includes(p.id)?'pill-top':'pill-normal';
+    const inp=(field,val,w)=>editMode
+      ?`<input class="assign-input" style="min-width:${w||50}px;" value="${val||''}" onchange="updatePerson(${p.id},'${field}',this.value)">`
+      :(val||'—');
+    const tog=(key,idx)=>{
+      const v=idx===null?p.scores[key]:p.scores[key][idx];
+      return`<div class="sc-cell${v?' sc-on':''}" onclick="toggleScore(${p.id},'${key}',${idx})"></div>`;
+    };
+    html+=`<tr>
+      <td class="sticky-col">${inp('name',p.name,70)}</td>
+      <td>${inp('group',p.group,30)}</td>
+      <td>${inp('school',p.school,80)}</td>
+      <td>${sc.att}</td><td>${sc.academic}</td><td>${sc.networking}</td><td>${sc.self}</td>
+      <td><span class="score-pill ${pillCls}">${sc.total}</span></td>
+      <td>${tog('career',null)}</td>
+      <td>${tog('conf',null)}</td>
+      ${editMode?`<td><button class="btn btn-import" style="padding:3px 8px;font-size:11px;" onclick="deletePerson(${p.id})">삭제</button></td>`:''}
+    </tr>`;
+  });
+  document.getElementById('pplTable').innerHTML=html;
+}
+
+// ── WEEKLY INPUT ──
+const WEEK_ITEMS = {
+  1:[
+    {key:'att',idx:0,label:'출석',pts:'-'},
+    {key:'intro',idx:null,label:'자기소개',pts:'3'},
+  ],
+  2:[{key:'att',idx:1,label:'출석'},{key:'qq',idx:0,label:'꼬리잡기\n질문',pts:'2'},{key:'qa',idx:0,label:'꼬리잡기\n답변',pts:'2'},{key:'qst',idx:0,label:'논문\n퀘스트',pts:'3'},{key:'qz',idx:0,label:'리뷰논문\n퀴즈',pts:'1'},{key:'ml',idx:0,label:'식사\n인증샷',pts:'2'},{key:'ph',idx:0,label:'네컷사진\n인증샷',pts:'1'},{key:'sp',idx:0,label:'자율\n발표',pts:'2'}],
+  3:[{key:'att',idx:2,label:'출석'},{key:'qq',idx:1,label:'꼬리잡기\n질문',pts:'2'},{key:'qa',idx:1,label:'꼬리잡기\n답변',pts:'2'},{key:'qst',idx:1,label:'논문\n퀘스트',pts:'3'},{key:'qz',idx:1,label:'리뷰논문\n퀴즈',pts:'1'},{key:'ml',idx:1,label:'식사\n인증샷',pts:'2'},{key:'ph',idx:1,label:'네컷사진\n인증샷',pts:'1'},{key:'sp',idx:1,label:'자율\n발표',pts:'2'}],
+  4:[{key:'att',idx:3,label:'출석'},{key:'qq',idx:2,label:'꼬리잡기\n질문',pts:'2'},{key:'qa',idx:2,label:'꼬리잡기\n답변',pts:'2'},{key:'qst',idx:2,label:'논문\n퀘스트',pts:'3'},{key:'qz',idx:2,label:'리뷰논문\n퀴즈',pts:'1'},{key:'ml',idx:2,label:'식사\n인증샷',pts:'2'},{key:'ph',idx:2,label:'네컷사진\n인증샷',pts:'1'},{key:'sp',idx:2,label:'자율\n발표',pts:'2'}],
+  5:[{key:'att',idx:4,label:'출석'},{key:'qq',idx:3,label:'꼬리잡기\n질문',pts:'2'},{key:'qa',idx:3,label:'꼬리잡기\n답변',pts:'2'},{key:'qst',idx:3,label:'논문\n퀘스트',pts:'3'},{key:'qz',idx:3,label:'리뷰논문\n퀴즈',pts:'1'},{key:'ml',idx:3,label:'식사\n인증샷',pts:'2'},{key:'ph',idx:3,label:'네컷사진\n인증샷',pts:'1'},{key:'sp',idx:3,label:'자율\n발표',pts:'2'}],
+  6:[{key:'att',idx:5,label:'출석'},{key:'qq',idx:4,label:'꼬리잡기\n질문',pts:'2'},{key:'qa',idx:4,label:'꼬리잡기\n답변',pts:'2'},{key:'qst',idx:4,label:'논문\n퀘스트',pts:'3'},{key:'qz',idx:4,label:'리뷰논문\n퀴즈',pts:'1'},{key:'ml',idx:4,label:'식사\n인증샷',pts:'2'},{key:'ph',idx:4,label:'네컷사진\n인증샷',pts:'1'},{key:'sp',idx:4,label:'자율\n발표',pts:'2'}],
+  7:[{key:'att',idx:6,label:'출석'},{key:'qq',idx:5,label:'꼬리잡기\n질문',pts:'2'},{key:'qa',idx:5,label:'꼬리잡기\n답변',pts:'2'},{key:'qst',idx:5,label:'논문\n퀘스트',pts:'3'},{key:'qz',idx:5,label:'리뷰논문\n퀴즈',pts:'1'},{key:'ml',idx:5,label:'식사\n인증샷',pts:'2'},{key:'ph',idx:5,label:'네컷사진\n인증샷',pts:'1'},{key:'sp',idx:5,label:'자율\n발표',pts:'2'}],
+  8:[{key:'att',idx:7,label:'출석'},{key:'qq',idx:6,label:'꼬리잡기\n질문',pts:'2'},{key:'qa',idx:6,label:'꼬리잡기\n답변',pts:'2'},{key:'qst',idx:6,label:'논문\n퀘스트',pts:'3'},{key:'qz',idx:6,label:'리뷰논문\n퀴즈',pts:'1'},{key:'ml',idx:6,label:'식사\n인증샷',pts:'2'},{key:'ph',idx:6,label:'네컷사진\n인증샷',pts:'1'},{key:'sp',idx:6,label:'자율\n발표',pts:'2'}],
+};
+
+function toggleScore(pid,key,idx){
+  const p=D.participants.find(x=>x.id===pid);if(!p)return;
+  if(idx===null){p.scores[key]=1-p.scores[key];}
+  else{p.scores[key][idx]=1-p.scores[key][idx];}
+  localStorage.setItem(SK,JSON.stringify(D));
+  // update cell UI
+  const cellId=`c_${pid}_${key}_${idx}`;
+  const cell=document.getElementById(cellId);
+  if(cell){
+    const v=idx===null?p.scores[key]:p.scores[key][idx];
+    cell.className='sc-cell'+(v?' sc-on':'');
+  }
+  // update total in rank/people if visible
+  const sc=calcScore(p);
+  const totEl=document.getElementById(`tot_${pid}`);
+  if(totEl)totEl.textContent=sc.total;
+}
+
+let inputWeek=1;
+function switchInputWeek(w,btn){
+  inputWeek=w;
+  document.querySelectorAll('#inputWeekNav .week-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderInputGrid();
+}
+
+function renderInputGrid(){
+  const items=WEEK_ITEMS[inputWeek];
+  const sc=D.schedule[inputWeek-1]||{};
+  const dateLine=inputWeek===1&&sc.date?` — ${sc.date}`:(sc.dateWeekday||sc.dateWeekend?` — 주중 ${sc.dateWeekday||'미정'} / 주말 ${sc.dateWeekend||'미정'}`:'');
+
+  let html=`<div style="font-size:13px;font-weight:600;color:var(--primary);margin-bottom:10px;">${inputWeek}주차${dateLine}</div>
+  <div class="sc-wrap"><table class="sc-table"><tr>
+    <th class="sticky-col sc-cat-hd">이름</th>
+    <th class="sticky-col2 sc-cat-hd">조</th>`;
+  items.forEach(it=>{html+=`<th style="min-width:52px;">${it.label.replace(/\n/g,'<br>')}${it.pts?'<br><span style=\"font-size:10px;color:#8bbcdc;\">▸'+it.pts+'점</span>':''}</th>`;});
+  html+=`<th>현재<br>합계</th></tr>`;
+
+  D.participants.forEach(p=>{
+    const sc=calcScore(p);
+    html+=`<tr><td class="sticky-col">${p.name}</td><td class="sticky-col2">${p.group||''}</td>`;
+    items.forEach(it=>{
+      const v=it.idx===null?p.scores[it.key]:p.scores[it.key][it.idx];
+      html+=`<td><div class="sc-cell${v?' sc-on':''}" id="c_${p.id}_${it.key}_${it.idx}" onclick="toggleScore(${p.id},'${it.key}',${it.idx})"></div></td>`;
+    });
+    html+=`<td id="tot_${p.id}" style="font-weight:700;color:var(--primary);">${sc.total}</td></tr>`;
+  });
+  html+='</table></div>';
+  document.getElementById('inputGrid').innerHTML=html;
+  document.getElementById('inputWeekNav').innerHTML=Array.from({length:8},(_,i)=>
+    `<button class="week-btn${i+1===inputWeek?' active':''}" onclick="switchInputWeek(${i+1},this)">${i+1}주차</button>`
+  ).join('');
+}
+
+// ── RANK ──
+function renderRank(){
+  const sorted=[...D.participants].map(p=>({p,sc:calcScore(p)})).sort((a,b)=>b.sc.total-a.sc.total);
+  const pass=sorted.filter(x=>x.sc.total>=60).length;
+  const avg=sorted.length?Math.round(sorted.reduce((s,x)=>s+x.sc.total,0)/sorted.length):0;
+  document.getElementById('rankTotal').textContent=sorted.length;
+  document.getElementById('rankPass').textContent=pass;
+  document.getElementById('rankTop').textContent=Math.min(5,sorted.length);
+  document.getElementById('rankAvg').textContent=avg+'점';
+
+  let html=`<tr>
+    <th style="width:44px;">순위</th>
+    <th class="sticky-col">이름</th><th style="min-width:36px;">조</th>
+    <th>출석<br><span style="font-size:10px;font-weight:400;">최대15</span></th>
+    <th>학술적 참여<br><span style="font-size:10px;font-weight:400;">최대56</span></th>
+    <th>네트워킹<br><span style="font-size:10px;font-weight:400;">최대24</span></th>
+    <th>자기주도성<br><span style="font-size:10px;font-weight:400;">최대31</span></th>
+    <th>합계<br><span style="font-size:10px;font-weight:400;">최대126</span></th>
+    <th>수료</th>
+  </tr>`;
+  sorted.forEach(({p,sc},i)=>{
+    const rank=i+1;
+    let rowCls='';
+    if(rank===1)rowCls='rank-1';
+    else if(rank===2)rowCls='rank-2';
+    else if(rank<=5)rowCls='rank-3';
+    else if(sc.total>=60)rowCls='rank-pass';
+    const medal=rank===1?'🥇 ':rank===2?'🥈 ':rank<=5?'🥉 ':'';
+    html+=`<tr class="${rowCls}">
+      <td class="rank-num">${rank}</td>
+      <td class="sticky-col">${medal}${p.name}</td>
+      <td style="color:var(--muted);font-size:12px;">${p.group||''}</td>
+      <td>${sc.att}</td><td>${sc.academic}</td><td>${sc.networking}</td><td>${sc.self}</td>
+      <td><strong>${sc.total}</strong></td>
+      <td>${sc.total>=60?'<span class="chip chip-green">✓</span>':'—'}</td>
+    </tr>`;
+  });
+  document.getElementById('rankTable').innerHTML=html;
+}
+
+// ── OVERRIDE RENDER ALL ──
+const _origRenderAll = renderAll;
+renderAll = function(){
+  _origRenderAll();
+  if(document.getElementById('tab-people').classList.contains('active')) renderPeople();
+  if(document.getElementById('tab-input').classList.contains('active')) renderInputGrid();
+  if(document.getElementById('tab-rank').classList.contains('active')) renderRank();
+};
+
+// override switchTab to render on demand
+const _origSwitchTab = switchTab;
+switchTab = function(n, el){
+  _origSwitchTab(n, el);
+  if(n==='people') renderPeople();
+  if(n==='input') renderInputGrid();
+  if(n==='rank') renderRank();
+};
+
+// override toggleEdit to update people tab
+const _origToggleEdit = toggleEdit;
+toggleEdit = function(){
+  _origToggleEdit();
+  if(document.getElementById('tab-people').classList.contains('active')) renderPeople();
+};
 
 loadData();
 </script>
